@@ -1,0 +1,21 @@
+python watchdog module for monitoring directories.
+
+There are several libraries that can be used for monitoring files and directories.
+Example: inotify, gaurd, watchdog, etc.
+
+PYTHON WATCHDOG
+
+observer
+    |
+   \|/
+event handler
+    |
+   \|/
+-----------------
+Directory/files  |
+events like      |
+on_create        |
+on_modified      |
+on_delete        |
+--------------- 
+
