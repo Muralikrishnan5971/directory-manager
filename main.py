@@ -1,5 +1,10 @@
+__author__ = "muralikrishnan"
+
 import os
+import time
 import shutil
+import getpass
+import logging
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -15,7 +20,7 @@ extension = {
 "archive":['zip', 'tar', 'gz', 'pkg', 'dmg', 'app']
 }
 
-# assign destination location based on the destination type
+# assign dest folder location based on the dest type
 def select_destination_folder(dest_type):
     
     if dest_type == "document":
@@ -33,8 +38,8 @@ def move_file(source, dest):
         pass
     else:
         try:
-            print("Moving: ", source, "to ", dest)
-            # shutil.move(source, dest)
+            # print("Moving: ", source, "to ", dest)
+            shutil.move(source, dest)
         except FileNotFoundError: 
             print ('File Not Found') 
         
@@ -46,18 +51,41 @@ def find_dest_folder(file_ext):
                 return key
         
 
-# # class MoveHandler(FileSystemEventHandler):
+class MoveHandler(FileSystemEventHandler):
     
-def on_modified():
-    with os.scandir(source) as files:
-        for file in files:
-            filename = file.name.split(".")
-            file_ext = filename[-1].lower()
-            dest_type = find_dest_folder(file_ext)
-            source_filepath = source + "/" + file.name
-            dest_filepath = select_destination_folder(dest_type)
+    # overriding on_modified function from FileSystemEventHandler
+    def on_modified(self, event):
+        with os.scandir(source) as files:
+            for file in files:
+                filename = file.name.split(".")
+                file_ext = filename[-1].lower()
+                dest_type = find_dest_folder(file_ext)
+                source_filepath = source + "/" + file.name
+                dest_filepath = select_destination_folder(dest_type)
 
-            # print("Moving: ", source_filepath, "to ", dest_filepath)
-            move_file(source_filepath, dest_filepath)
-  
-on_modified()
+                # print("Moving: ", source_filepath, "to ", dest_filepath)
+                move_file(source_filepath, dest_filepath)
+
+if __name__ == "__main__":
+    
+    user = getpass.getuser()
+    logging.basicConfig(
+        filename='watch.log',             # store logs to a file
+        filemode='a',
+        level=logging.INFO,
+        format='%(asctime)s - %(process)d - %(message)s' +
+        f'user: {user}',                    # store logs with username
+        datefmt='%Y-%m-%d %H:%M:%S')
+    
+    path = source
+    event_handler = MoveHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path, recursive=True)
+    observer.start()
+
+    try:
+        while True:
+            time.sleep(10)
+    except KeyboardInterrupt:
+        observer.stop()
+        observer.join()
